@@ -1,0 +1,10 @@
+name: binder
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.8
+  - ndcctools
+  - jupyter
+  - dill
+prefix: /afs/crc.nd.edu/user/d/dsimone2/anaconda3/envs/binder
