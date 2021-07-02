@@ -39,7 +39,7 @@ def get_output_widgets(number_of_tasks, number_of_workers):
         value=0,
         min=0,
         max=number_of_tasks,
-        description='Number of tasks complete:',
+        description='Percent of tasks complete:',
         style = {'description_width': 'initial'},
         orientation='horizontal'
     )
@@ -47,7 +47,7 @@ def get_output_widgets(number_of_tasks, number_of_workers):
         value=0,
         min=0,
         max=5,
-        description='Number of workers idle',
+        description='Percent of workers idle',
         style = {'description_width': 'initial'},
         orientation='horizontal'
     )
@@ -55,13 +55,25 @@ def get_output_widgets(number_of_tasks, number_of_workers):
         value=0,
         min=0,
         max=number_of_workers,
-        description='Number of workers connected',
+        description='Percent of max workers connected',
+        style = {'description_width': 'initial'},
+        orientation='horizontal'
+    )
+    status_message = widgets.Text(
+        description='Workqueue Status',
+        disabled=True,
+        style = {'description_width': 'initial'},
+        orientation='horizontal'
+    )
+    worker_time = widgets.Text(
+        description='Time spent by workers (Seconds)',
+        disabled=True,
         style = {'description_width': 'initial'},
         orientation='horizontal'
     )
     tasks_per_second = widgets.FloatText(
         value=0,
-        description='Number of tasks complete per second',
+        description='Average tasks complete per second',
         style = {'description_width': 'initial'},
         disabled=True
     )
@@ -69,8 +81,8 @@ def get_output_widgets(number_of_tasks, number_of_workers):
     worker_properties = ["Number of workers", "Cores", "Memory", "Disk", "GPUs"]
     worker_array = []
     for name in worker_properties:
-        worker_array.append(widgets.Text(description=name, disabled=True,, style = {'description_width': 'initial'}, layout=widgets.Layout(width='15%', height='40px')))
-    return [tasks_done_bar, workers_connected, tasks_idling, tasks_per_second, worker_array]
+        worker_array.append(widgets.Text(description=name, disabled=True, style = {'description_width': 'initial'}, layout=widgets.Layout(width='15%', height='40px')))
+    return [tasks_done_bar, workers_connected, tasks_idling, tasks_per_second, worker_array, status_message, worker_time]
 
 def create_progress_tracker(task_output_storage, number_of_tasks, starting_number, number_of_workers):
     for i in range(starting_number, starting_number + number_of_tasks + number_of_workers + 10):
