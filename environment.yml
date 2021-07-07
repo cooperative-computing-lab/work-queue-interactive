@@ -7,4 +7,5 @@ dependencies:
   - ndcctools
   - jupyter
   - dill
+  - bqplot
 prefix: /afs/crc.nd.edu/user/d/dsimone2/anaconda3/envs/binder

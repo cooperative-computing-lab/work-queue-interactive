@@ -1,5 +1,7 @@
 import ipywidgets as widgets
 import time
+import bqplot
+from bqplot import pyplot as plt
 
 class Display():
     num_workers = widgets.IntSlider(
@@ -40,6 +42,10 @@ class Display():
     task_output_storage = []
     
     starting_time = time.perf_counter() # track time since tasks were submitted: used in output display
+   
+    pie = None
+    bar_chart  = ''
+   
     
     def create_user_input_widgets(self):
         display(widgets.HBox([self.tasks_range, self.num_workers])) # displays the input widgets 
@@ -114,6 +120,29 @@ class Display():
         display(widgets.VBox(vertical_temp))
         self.starting_time = time.perf_counter()
         
+        fig = plt.figure(title="Work Queue Time Distribution (Milliseconds)")
+        self.pie = plt.pie(sizes = [0, 0, 0],
+                  labels =['Work Queue internal', 'Waiting for workers', 'Application'],
+                  display_values = True,
+                  values_format=".0f",
+                  display_labels='outside')
+        self.pie.stroke="black"
+        self.pie.colors = ["tomato","lawngreen", "skyblue"]
+        self.pie.opacities = [0.7,0.8,0.9]
+
+        self.pie.radius = 150
+        self.pie.inner_radius = 60
+
+        self.pie.label_color = 'orangered'
+        self.pie.font_size = '20px'
+        self.pie.font_weight = 'bold'
+        plt.show()
+        fig = plt.figure(title="Worker resources")
+        bqplot.axes.Axis.visible = False
+        self.bar_chart = plt.bar(x=[1, 2, 3], y=[0, 0, 0], labels=['Total CPU cores', 'Total memory', 'Total disk'])
+        plt.show()
+
+        
     def update_output_widgets(self, q, t):
         self.status_message.value = "Updating output"
         if t.output == 1: # if x is a prime number then update it accordingly
@@ -129,10 +158,15 @@ class Display():
         self.tasks_per_second.value = self.tasks_done_bar.value / (time.perf_counter() - self.starting_time)
         self.status_message.value = "Waiting for workers"
         self.worker_time.value = str(q.stats.time_workers_execute / 1000000)
+        self.pie.sizes = [q.stats.time_internal / 1000, q.stats.time_polling / 1000, q.stats.time_application / 1000]
+        self.bar_chart.y = [q.stats.total_cores, q.stats.total_memory, q.stats.total_disk]
+        self.bar_chart.scale = bqplot.scales.LogScale(min=0, max=10)
         if q.stats.tasks_done >= (self.tasks_range.value[1]-self.tasks_range.value[0]) - 1:
             self.status_message.value = "All tasks complete!"
         elif q.stats.tasks_done == 0:
             self.status_message.value = "Initializing workers"
+
+        
 
                 
 
