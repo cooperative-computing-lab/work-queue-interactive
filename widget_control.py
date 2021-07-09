@@ -4,10 +4,11 @@ import bqplot
 from bqplot import pyplot as plt
 
 class Display():
+    # create input widgets
     num_workers = widgets.IntSlider(
         value=10,
         min=1,
-        max=10,
+        max=4,
         step=1,
         description='Max number of workers:',
         style = {'description_width': 'initial'},
@@ -29,7 +30,7 @@ class Display():
         readout=True,
         readout_format='d',
     )
-    
+    # instantiate the output widgets as None so that they are properly reset between runs
     tasks_done_bar = None
     tasks_idling = None
     workers_connected = None
@@ -37,20 +38,19 @@ class Display():
     worker_time = None
     tasks_per_second = None
 
-    worker_properties = ["Number of workers", "Cores", "Memory", "Disk", "GPUs"]
-    worker_array = []
+    # holds output for the primality of the numbers
     task_output_storage = []
     
     starting_time = time.perf_counter() # track time since tasks were submitted: used in output display
    
-    pie = None
-    bar_chart  = ''
-   
+    # variable to hold the pie chart
+    pie = None   
     
     def create_user_input_widgets(self):
         display(widgets.HBox([self.tasks_range, self.num_workers])) # displays the input widgets 
         
     def create_output_widgets(self):
+        # create the output widgets
         self.tasks_done_bar = widgets.IntProgress(
             value=0,
             min=0,
@@ -94,11 +94,11 @@ class Display():
             style = {'description_width': 'initial'},
             disabled=True
         )
-        self.task_output_storage = []
-        for name in self.worker_properties:
-            self.worker_array.append(widgets.Text(description=name, disabled=True, style = {'description_width': 'initial'}, layout=widgets.Layout(width='15%', height='40px')))
+        self.task_output_storage = [] # clear output from previous runs
+        # display output
         display(widgets.HBox([self.status_message, self.tasks_per_second, self.worker_time]))
         display(widgets.HBox([self.tasks_done_bar, self.workers_connected, self.tasks_idling]))
+        # initialize real time task display output
         for i in range(self.tasks_range.value[0], self.tasks_range.value[1] + self.num_workers.value + 10):
             self.task_output_storage.append(widgets.ToggleButton(
                 value=False,
@@ -110,25 +110,27 @@ class Display():
         horizontal_boxes = 15
         vertical_boxes = (self.tasks_range.value[1] - self.tasks_range.value[0]) // horizontal_boxes + 1
         vertical_temp = []
+        # actually place the real time display output on screen
         for j in range(vertical_boxes):
             horizontal_temp = []
             for i in range(horizontal_boxes):
-                if (i + j * horizontal_boxes + 2) > (self.tasks_range.value[1]-self.tasks_range.value[0]):
+                if (i + j * horizontal_boxes + 2) > (self.tasks_range.value[1]):
                     break
                 horizontal_temp.append(self.task_output_storage[i + j * horizontal_boxes + 2])
             vertical_temp.append(widgets.HBox(horizontal_temp))
         display(widgets.VBox(vertical_temp))
-        self.starting_time = time.perf_counter()
         
+        self.starting_time = time.perf_counter() # reset starting time
+        
+        # below are just properties of the worker time pie chart
         fig = plt.figure(title="Work Queue Time Distribution (Milliseconds)")
         self.pie = plt.pie(sizes = [0, 0, 0],
                   labels =['Work Queue internal', 'Waiting for workers', 'Application'],
                   display_values = True,
-                  values_format=".0f",
+                  values_format=".1f",
                   display_labels='outside')
         self.pie.stroke="black"
-        self.pie.colors = ["tomato","lawngreen", "skyblue"]
-        self.pie.opacities = [0.7,0.8,0.9]
+        self.pie.colors = ["tomato","lawngreen", "gray"]
 
         self.pie.radius = 150
         self.pie.inner_radius = 60
@@ -136,10 +138,6 @@ class Display():
         self.pie.label_color = 'orangered'
         self.pie.font_size = '20px'
         self.pie.font_weight = 'bold'
-        plt.show()
-        fig = plt.figure(title="Worker resources")
-        bqplot.axes.Axis.visible = False
-        self.bar_chart = plt.bar(x=[1, 2, 3], y=[0, 0, 0], labels=['Total CPU cores', 'Total memory', 'Total disk'])
         plt.show()
 
         
@@ -152,15 +150,14 @@ class Display():
             if (int(t.id) + 1 - i) > 0:
                 if (self.task_output_storage[int(t.id) + 1 - i].button_style == ''):
                         self.task_output_storage[int(t.id) + 1 - i].button_style='warning'
+        # the below lines just update the output widgets
         self.tasks_done_bar.value = q.stats.tasks_done
         self.workers_connected.value = q.stats.workers_connected
-        self.tasks_idling.value = q.stats.workers_idle
+        self.tasks_idling.value = q.stats.workers_idle - 1
         self.tasks_per_second.value = self.tasks_done_bar.value / (time.perf_counter() - self.starting_time)
         self.status_message.value = "Waiting for workers"
         self.worker_time.value = str(q.stats.time_workers_execute / 1000000)
         self.pie.sizes = [q.stats.time_internal / 1000, q.stats.time_polling / 1000, q.stats.time_application / 1000]
-        self.bar_chart.y = [q.stats.total_cores, q.stats.total_memory, q.stats.total_disk]
-        self.bar_chart.scale = bqplot.scales.LogScale(min=0, max=10)
         if q.stats.tasks_done >= (self.tasks_range.value[1]-self.tasks_range.value[0]) - 1:
             self.status_message.value = "All tasks complete!"
         elif q.stats.tasks_done == 0:
