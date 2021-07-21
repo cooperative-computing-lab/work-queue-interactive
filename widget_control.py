@@ -6,9 +6,9 @@ from bqplot import pyplot as plt
 class Display():
     # create input widgets
     num_workers = widgets.IntSlider(
-        value=10,
+        value=20,
         min=1,
-        max=4,
+        max=100,
         step=1,
         description='Max number of workers:',
         style = {'description_width': 'initial'},
